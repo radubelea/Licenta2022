@@ -4,7 +4,8 @@ import itertools
 import category_encoders as ce
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, confusion_matrix, r2_score, mean_squared_error
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.model_selection import cross_val_score, RandomizedSearchCV
 from utils.data import retrieve_data
 import matplotlib.pyplot as plt
 import pickle
@@ -31,27 +32,25 @@ def create_confusion_matrix(cm, labels):
 
 
 def main():
-    x_train, x_test, y_train, y_test = retrieve_data()
+    x, y, x_train, x_test, y_train, y_test = retrieve_data()
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
     print("Split the data into test and train values")
     filename = r'D:\UBB\an3\sem2\Licenta\ML\SVM\model.sav'
-    # classifier = SVC(kernel='rbf', random_state=0)
-    # classifier.fit(x_train, y_train)
-    # pickle.dump(classifier, open(filename, 'wb'))
-    classifier = pickle.load(open(filename, 'rb'))
+    classifier = SVC(kernel='rbf', random_state=0)
+    classifier.fit(x_train, y_train)
+    pickle.dump(classifier, open(filename, 'wb'))
+    # classifier = pickle.load(open(filename, 'rb'))
     print("Loaded the model")
     y_pred = classifier.predict(x_test)
     print("Predicted the labels")
     labels = ['1', '2', '3', '4', '5', '6', '7', '8']
 
     acc = accuracy_score(y_test, y_pred)
-    r2s = r2_score(y_test, y_pred)
-    mse = mean_squared_error(y_test, y_pred)
+    cvs = cross_val_score(classifier, x, y, cv=5)
     print('Accuracy: ', acc)
-    print('R2 Score: ', r2s)
-    print('Mean Squared Error: ', mse)
+    print('Cross Val Score: ', cvs)
     cm = confusion_matrix(y_test, y_pred)
     create_confusion_matrix(cm, labels)
 

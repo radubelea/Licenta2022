@@ -2,12 +2,13 @@ import pandas as pd
 import numpy as np
 import itertools
 import category_encoders as ce
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, Normalizer
 from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense
 from keras import Input
-from sklearn.metrics import accuracy_score, confusion_matrix, r2_score, mean_squared_error
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.model_selection import cross_val_score
 from utils.data import retrieve_data
 import matplotlib.pyplot as plt
 import pickle
@@ -50,10 +51,13 @@ def create_confusion_matrix(cm, labels):
 
 
 def main():
-    x_train, x_test, y_train, y_test = retrieve_data()
+    x, y, x_train, x_test, y_train, y_test = retrieve_data()
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
+    # normalizer = Normalizer()
+    # x_train = normalizer.fit_transform(x_train)
+    # x_test = normalizer.transform(x_test)
     print("Split the data into test and train values")
     filename = 'model_FFNN.sav'
     classifier = create_model()
@@ -81,11 +85,9 @@ def main():
     labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 
     acc = accuracy_score(y_test, y_pred)
-    r2s = r2_score(y_test, y_pred)
-    mse = mean_squared_error(y_test, y_pred)
+    cvs = cross_val_score(classifier, x, y, cv=5)
     print('Accuracy: ', acc)
-    print('R2 Score: ', r2s)
-    print('Mean Squared Error: ', mse)
+    print('Cross Val Score: ', cvs)
     cm = confusion_matrix(y_test, y_pred)
     create_confusion_matrix(cm, labels)
 

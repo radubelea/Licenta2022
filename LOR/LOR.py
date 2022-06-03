@@ -5,6 +5,7 @@ import category_encoders as ce
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, r2_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV
 from utils.data import retrieve_data
 import matplotlib.pyplot as plt
 import pickle
@@ -31,19 +32,25 @@ def create_confusion_matrix(cm, labels):
 
 
 def main():
-    x_train, x_test, y_train, y_test = retrieve_data()
+    x, y, x_train, x_test, y_train, y_test = retrieve_data()
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
     print("Split the data into test and train values")
     filename = 'model_LOR.sav'
-    # classifier = LogisticRegression(multi_class='ovr', max_iter=100000)
+    C = np.logspace(-4, 4, 10)
+    penalty = ['l2']
+    params_lor = dict(C=C, penalty=penalty)
+    classifier = LogisticRegression(multi_class='ovr', max_iter=100000)
     # classifier.fit(x_train, y_train)
-    # pickle.dump(classifier, open(filename, 'wb'))
+    lor_grid = GridSearchCV(estimator=classifier, param_grid=params_lor, cv=5, verbose=1, scoring='accuracy')
+    lor_grid.fit(x_train, y_train)
+    best_grid = lor_grid.best_estimator_
+    pickle.dump(classifier, open(filename, 'wb'))
     print("Trained the model")
-    classifier = pickle.load(open(filename, 'rb'))
+    # classifier = pickle.load(open(filename, 'rb'))
     print("Loaded the model")
-    y_pred = classifier.predict(x_test)
+    y_pred = best_grid.predict(x_test)
     print("Predicted the labels")
     labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 
@@ -53,8 +60,6 @@ def main():
     print('Accuracy: ', acc)
     print('R2 Score: ', r2s)
     print('Mean Squared Error: ', mse)
-    cm = confusion_matrix(y_test, y_pred)
-    create_confusion_matrix(cm, labels)
 
 
 if __name__ == "__main__":
